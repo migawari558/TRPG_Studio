@@ -173,7 +173,7 @@ export function TRPGEditor({ scenario, onSave, onBack, isDarkMode, toggleTheme }
   }, [pages, activePageId, syncPreview]);
 
   return (
-    <div className={`h-screen w-full flex flex-col ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-white text-gray-900'} transition-colors duration-300 text-sm`}> 
+    <div className={`h-screen w-full flex flex-col ${isDarkMode ? 'dark bg-gray-950 text-gray-100' : 'bg-gray-100 text-gray-900'} transition-colors duration-300 text-sm`}> 
       
       <EditorHeader 
         scenarioTitle={scenario.title}

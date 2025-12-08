@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, memo } from 'react';
 import { parseMarkdown } from '../../utils/markdownParser';
 
-export function EditorArea({ 
+export const EditorArea = memo(function EditorArea({ 
   viewMode, 
   title,
   content, 
@@ -45,31 +45,37 @@ export function EditorArea({
   }, []);
 
   return (
-    <div className="flex-grow flex h-full overflow-hidden relative">
-      <div className={`flex-1 h-full transition-all ${viewMode === 'preview' ? 'hidden' : ''}`}>
-        <textarea 
-          ref={textareaRef} 
-          value={content} 
-          onChange={(e) => onChange(e.target.value)} 
-          onKeyUp={onSyncPreview} 
-          onClick={onSyncPreview} 
-          onScroll={onSyncPreview} 
-          onKeyDown={onKeyDown}
-          placeholder="ここにシナリオを入力..." 
-          className="w-full h-full resize-none p-6 focus:outline-none text-sm font-mono leading-relaxed bg-white dark:bg-gray-900" 
-          spellCheck={false} 
-        />
+    <div className="flex-grow flex h-full overflow-hidden relative bg-gray-100 dark:bg-gray-950">
+      <div className={`flex-1 h-full transition-all ${viewMode === 'preview' ? 'hidden' : ''} relative p-4`}>
+        <div className="h-full bg-white dark:bg-gray-900 shadow-sm rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+          <textarea 
+            ref={textareaRef} 
+            value={content} 
+            onChange={(e) => onChange(e.target.value)} 
+            onKeyUp={onSyncPreview} 
+            onClick={onSyncPreview} 
+            onScroll={onSyncPreview} 
+            onKeyDown={onKeyDown}
+            placeholder="ここにシナリオを入力..." 
+            className="w-full h-full resize-none p-8 md:p-12 focus:outline-none text-sm font-mono leading-relaxed bg-transparent text-gray-800 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600 selection:bg-indigo-100 dark:selection:bg-indigo-900/50" 
+            spellCheck={false} 
+          />
+        </div>
       </div>
-      {viewMode === 'split' && <div className="w-px shrink-0 bg-gray-200 dark:bg-gray-700"></div>}
+      
+      {viewMode === 'split' && <div className="w-px shrink-0 bg-transparent"></div>}
+      
       <div 
         ref={previewRef}
-        className={`flex-1 h-full overflow-y-auto ${viewMode === 'edit' ? 'hidden' : ''} bg-gray-50 dark:bg-gray-800`}
+        className={`flex-1 h-full overflow-y-auto ${viewMode === 'edit' ? 'hidden' : ''} p-4`}
       >
-        <div className="max-w-3xl mx-auto p-6 min-h-full bg-white dark:bg-gray-900 border-x border-gray-200 dark:border-gray-700 shadow-sm my-4">
-          <h1 className="text-2xl font-bold mb-4 pb-2 border-b border-gray-100 dark:border-gray-800">{title}</h1>
-          <div className="prose prose-sm dark:prose-invert max-w-none font-sans break-words" dangerouslySetInnerHTML={{ __html: parseMarkdown(content, images) }} />
+        <div className="max-w-3xl mx-auto min-h-full bg-white dark:bg-gray-900 shadow-sm rounded-2xl my-0 overflow-hidden border border-gray-200 dark:border-gray-800">
+          <div className="p-10 md:p-14">
+            <h1 className="text-3xl font-bold mb-8 pb-4 border-b border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white tracking-tight">{title}</h1>
+            <div className="prose prose-sm dark:prose-invert max-w-none font-sans break-words leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(content, images) }} />
+          </div>
         </div>
       </div>
     </div>
   );
-}
+});
