@@ -22,7 +22,7 @@ export const EditorHeader = memo(function EditorHeader({
   getShortcutLabel
 }) {
   return (
-    <header className="h-12 flex items-center justify-between px-6 border-b border-gray-160/80 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-16 transition-colors duration-300">
+    <header className="h-12 flex items-center justify-between px-6 border-b border-gray-160/80 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20 transition-colors duration-300">
       <div className="flex items-center gap-4">
         <button
           onClick={() => setShowLeftSidebar(!showLeftSidebar)}

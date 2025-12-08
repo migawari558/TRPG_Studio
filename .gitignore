@@ -4,6 +4,7 @@ node_modules/
 # Production
 dist/
 build/
+out/
 
 # Misc
 .DS_Store
