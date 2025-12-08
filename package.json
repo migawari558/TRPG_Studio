@@ -1,0 +1,57 @@
+{
+  "name": "trpg-scenario-manager",
+  "productName": "TRPG Studio",
+  "version": "1.0.0",
+  "author": "migawari",
+  "description": "TRPG Scenario Editor",
+  "main": "main.js",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "electron:dev": "concurrently \"vite\" \"electron .\"",
+    "make": "vite build && electron-forge make"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "icon": "./icon"
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "trpg_scenario_manager",
+            "setupIcon": "./icon.ico"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin",
+            "linux",
+            "win32"
+          ]
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "lucide-react": "^0.263.1",
+    "html2pdf.js": "^0.10.1"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^6.4.2",
+    "@electron-forge/maker-squirrel": "^6.4.2",
+    "@electron-forge/maker-zip": "^6.4.2",
+    "@vitejs/plugin-react": "^4.0.4",
+    "autoprefixer": "^10.4.14",
+    "concurrently": "^8.2.0",
+    "electron": "^26.1.0",
+    "postcss": "^8.4.27",
+    "tailwindcss": "^3.3.3",
+    "@tailwindcss/typography": "^0.5.9",
+    "vite": "^4.4.9"
+  }
+}
