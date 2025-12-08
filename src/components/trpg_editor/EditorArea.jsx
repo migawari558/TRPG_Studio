@@ -67,7 +67,7 @@ export function EditorArea({
       >
         <div className="max-w-3xl mx-auto p-6 min-h-full bg-white dark:bg-gray-900 border-x border-gray-200 dark:border-gray-700 shadow-sm my-4">
           <h1 className="text-2xl font-bold mb-4 pb-2 border-b border-gray-100 dark:border-gray-800">{title}</h1>
-          <div className="prose prose-sm dark:prose-invert max-w-none font-sans" dangerouslySetInnerHTML={{ __html: parseMarkdown(content, images) }} />
+          <div className="prose prose-sm dark:prose-invert max-w-none font-sans break-words" dangerouslySetInnerHTML={{ __html: parseMarkdown(content, images) }} />
         </div>
       </div>
     </div>

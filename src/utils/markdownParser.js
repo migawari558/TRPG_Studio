@@ -50,17 +50,17 @@ export const parseMarkdown = (text, images = {}) => {
 
   // Using fixed width style for name column to align text
 
-  html = html.replace(/^\[(.*?)\]\s*(.*)$/gm, (match, name, content) => {
+    html = html.replace(/^\[(.*?)\]\s*(.*)$/gm, (match, name, content) => {
 
-    return `<div class="flex gap-3 mb-1.5 items-start group">
+      return `<div class="flex gap-3 mb-1.5 items-start group">
 
-      <div class="flex-shrink-0 pt-2 text-right font-bold text-sm text-indigo-600 dark:text-indigo-400 select-none" style="width: ${nameColumnWidth};">${name}</div>
+        <div class="flex-shrink-0 pt-2 text-right font-bold text-sm text-indigo-600 dark:text-indigo-400 select-none whitespace-nowrap" style="width: ${nameColumnWidth};">${name}</div>
 
-      <div class="flex-grow bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg rounded-tl-none text-gray-800 dark:text-gray-100 leading-relaxed shadow-sm border border-gray-200 dark:border-gray-600 text-sm">${content}</div>
+        <div class="flex-grow bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg rounded-tl-none text-gray-800 dark:text-gray-100 leading-relaxed shadow-sm border border-gray-200 dark:border-gray-600 text-sm">${content}</div>
 
-    </div>`;
+      </div>`;
 
-  });
+    });
 
 
 
