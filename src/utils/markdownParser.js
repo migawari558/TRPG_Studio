@@ -46,21 +46,24 @@ export const parseMarkdown = (text, images = {}) => {
 
 
 
-  // 3. Custom TRPG Dialogue
+    // 3. Custom TRPG Dialogue
 
-  // Using fixed width style for name column to align text
+
+
+    // Using fixed width style for name column to align text
+
+
 
     html = html.replace(/^\[(.*?)\]\s*(.*)$/gm, (match, name, content) => {
 
-      return `<div class="flex gap-3 mb-1.5 items-start group">
 
-        <div class="flex-shrink-0 pt-2 text-right font-bold text-sm text-indigo-600 dark:text-indigo-400 select-none whitespace-nowrap" style="width: ${nameColumnWidth};">${name}</div>
 
-        <div class="flex-grow bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg rounded-tl-none text-gray-800 dark:text-gray-100 leading-relaxed shadow-sm border border-gray-200 dark:border-gray-600 text-sm">${content}</div>
+      return `<div class="mb-1.5 text-sm leading-relaxed text-gray-800 dark:text-gray-100"><strong class="font-bold text-indigo-600 dark:text-indigo-400 select-none mr-1">${name}</strong><span class="text-indigo-600 dark:text-indigo-400 font-bold">「</span>${content}<span class="text-indigo-600 dark:text-indigo-400 font-bold">」</span></div>`;
 
-      </div>`;
+
 
     });
+
 
 
 
