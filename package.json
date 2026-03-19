@@ -8,7 +8,7 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "electron:dev": "concurrently \"vite\" \"electron .\"",
+    "electron:dev": "concurrently \"vite\" \"electron . --dev\"",
     "make": "vite build && electron-forge make"
   },
   "config": {

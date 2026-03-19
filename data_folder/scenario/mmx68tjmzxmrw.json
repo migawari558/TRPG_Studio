@@ -1,0 +1,18 @@
+{
+  "id": "mmx68tjmzxmrw",
+  "title": "hogehoge",
+  "pages": [
+    {
+      "id": "p1",
+      "title": "メイン",
+      "content": "# hogehoge\n\n"
+    }
+  ],
+  "characters": [
+    "GM",
+    "PL1"
+  ],
+  "images": {},
+  "lastModified": 1773941104205,
+  "sortOrder": 1
+}

@@ -35,10 +35,11 @@ export function useEditorState(scenario) {
     );
   }, []);
 
-  const addNewPage = useCallback(() => {
+  const addNewPage = useCallback((customTitle) => {
     const newId = Date.now().toString();
     setPages(currentPages => {
-      const newPage = { id: newId, title: `新規ページ ${currentPages.length + 1}`, content: '' };
+      const title = customTitle || `新規ページ ${currentPages.length + 1}`;
+      const newPage = { id: newId, title: title, content: '' };
       return [...currentPages, newPage];
     });
     setActivePageId(newId);
@@ -60,6 +61,15 @@ export function useEditorState(scenario) {
     );
   }, []);
 
+  const reorderPages = useCallback((startIndex, endIndex) => {
+    setPages(prev => {
+      const result = Array.from(prev);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      return result;
+    });
+  }, []);
+
   const addCharacter = useCallback((name) => {
     setCharacters(prev => {
       if (!prev.includes(name)) return [...prev, name];
@@ -69,6 +79,14 @@ export function useEditorState(scenario) {
 
   const removeCharacter = useCallback((name) => {
     setCharacters(prev => prev.filter(c => c !== name));
+  }, []);
+
+  const renameCharacter = useCallback((oldName, newName) => {
+    if (!newName || newName === oldName) return;
+    setCharacters(prev => {
+      if (prev.includes(newName)) return prev;
+      return prev.map(c => c === oldName ? newName : c);
+    });
   }, []);
 
   return {
@@ -83,7 +101,9 @@ export function useEditorState(scenario) {
     addNewPage,
     deletePage,
     clearPage,
+    reorderPages,
     addCharacter,
-    removeCharacter
+    removeCharacter,
+    renameCharacter
   };
 }

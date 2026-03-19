@@ -2,7 +2,7 @@
 export const DEFAULT_SHORTCUTS = {
   // Text Formatting
   bold: { id: 'bold', label: '太字', key: 'b', ctrl: true, shift: false, alt: false },
-  heading: { id: 'heading', label: '見出し', key: 'h', ctrl: true, shift: false, alt: false },
+  heading: { id: 'heading', label: '見出し', key: 'h', ctrl: true, shift: true, alt: false },
   strikethrough: { id: 'strikethrough', label: '取り消し線', key: '-', ctrl: true, shift: true, alt: false },
   info: { id: 'info', label: '情報ブロック', key: 'i', ctrl: true, shift: false, alt: false },
   supplement: { id: 'supplement', label: '補足ブロック', key: '/', ctrl: true, shift: false, alt: false },
@@ -19,4 +19,8 @@ export const DEFAULT_SHORTCUTS = {
   // View Toggles
   npcList: { id: 'npcList', label: 'NPCリスト切替', key: 'u', ctrl: true, shift: true, alt: false },
   pageList: { id: 'pageList', label: 'ページ一覧切替', key: 'l', ctrl: true, shift: true, alt: false },
+
+  // Editor
+  search: { id: 'search', label: '検索', key: 'f', ctrl: true, shift: false, alt: false },
+  replace: { id: 'replace', label: '置換', key: 'h', ctrl: true, shift: false, alt: false },
 };

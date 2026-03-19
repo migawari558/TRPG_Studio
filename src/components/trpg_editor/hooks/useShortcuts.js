@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { DEFAULT_SHORTCUTS } from '../../../constants/shortcuts';
 
+const fs = window.require ? window.require('fs') : null;
+const path = window.require ? window.require('path') : null;
+
 export function useShortcuts({ 
+  dataPath,
   insertText, 
   openSceneModal, 
   addNewPage, 
@@ -13,6 +17,17 @@ export function useShortcuts({
 }) {
   const [shortcuts, setShortcuts] = useState(() => {
     try {
+      if (dataPath && fs && path) {
+         const settingsDir = path.join(dataPath, 'settings');
+         const settingsFile = path.join(settingsDir, 'settings.json');
+         if (fs.existsSync(settingsFile)) {
+           const content = fs.readFileSync(settingsFile, 'utf-8');
+           const parsed = JSON.parse(content);
+           return parsed.shortcuts 
+             ? { ...DEFAULT_SHORTCUTS, ...parsed.shortcuts } 
+             : { ...DEFAULT_SHORTCUTS, ...parsed };
+         }
+      }
       const saved = localStorage.getItem('trpg_shortcuts');
       return saved ? { ...DEFAULT_SHORTCUTS, ...JSON.parse(saved) } : DEFAULT_SHORTCUTS;
     } catch {
@@ -22,6 +37,29 @@ export function useShortcuts({
 
   const shortcutsRef = useRef(shortcuts);
   useEffect(() => { shortcutsRef.current = shortcuts; }, [shortcuts]);
+
+  useEffect(() => {
+    if (dataPath && fs && path) {
+      try {
+         if (!fs.existsSync(dataPath)) {
+           fs.mkdirSync(dataPath, { recursive: true });
+         }
+         const settingsDir = path.join(dataPath, 'settings');
+         if (!fs.existsSync(settingsDir)) {
+           fs.mkdirSync(settingsDir, { recursive: true });
+         }
+         const settingsFile = path.join(settingsDir, 'settings.json');
+         
+         const dataToSave = { shortcuts };
+         fs.writeFileSync(settingsFile, JSON.stringify(dataToSave, null, 2), 'utf-8');
+      } catch (e) {
+         console.error("Failed to save settings:", e);
+         localStorage.setItem('trpg_shortcuts_emergency_backup', JSON.stringify(shortcuts));
+      }
+    } else {
+      localStorage.setItem('trpg_shortcuts', JSON.stringify(shortcuts));
+    }
+  }, [shortcuts, dataPath]);
 
   const isShortcutMatch = (e, shortcut) => {
     if (!shortcut) return false;
