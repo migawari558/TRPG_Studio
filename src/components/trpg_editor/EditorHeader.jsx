@@ -19,6 +19,8 @@ export const EditorHeader = memo(function EditorHeader({
   onDownloadMd,
   onDownloadPageHtml,
   onDownloadScenarioHtml,
+  onDownloadPagePdf,
+  onDownloadScenarioPdf,
   onClearPage,
   getShortcutLabel
 }) {
@@ -87,6 +89,8 @@ export const EditorHeader = memo(function EditorHeader({
           onDownloadMd={onDownloadMd}
           onDownloadPageHtml={onDownloadPageHtml}
           onDownloadScenarioHtml={onDownloadScenarioHtml}
+          onDownloadPagePdf={onDownloadPagePdf}
+          onDownloadScenarioPdf={onDownloadScenarioPdf}
           isDarkMode={isDarkMode}
         />
 

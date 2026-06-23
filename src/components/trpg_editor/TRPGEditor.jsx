@@ -57,7 +57,9 @@ export function TRPGEditor({
   const { 
     handleDownloadMd, 
     handleDownloadPageHtml, 
-    handleDownloadScenarioHtml 
+    handleDownloadScenarioHtml,
+    handleDownloadPagePdf,
+    handleDownloadScenarioPdf,
   } = useExporter({ 
     scenarioTitle: scenario.title, 
     pagesRef, imagesRef, activePageIdRef 
@@ -176,6 +178,8 @@ export function TRPGEditor({
         onDownloadMd={handleDownloadMd}
         onDownloadPageHtml={handleDownloadPageHtml}
         onDownloadScenarioHtml={handleDownloadScenarioHtml}
+        onDownloadPagePdf={handleDownloadPagePdf}
+        onDownloadScenarioPdf={handleDownloadScenarioPdf}
         onClearPage={confirmClearPage}
         getShortcutLabel={getShortcutLabel}
       />

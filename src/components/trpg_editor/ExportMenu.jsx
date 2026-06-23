@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Download, ChevronDown, FileText, File, FileCode } from 'lucide-react';
 
-export function ExportMenu({ onDownloadMd, onDownloadPageHtml, onDownloadScenarioHtml, isDarkMode }) {
+export function ExportMenu({
+  onDownloadMd,
+  onDownloadPageHtml,
+  onDownloadScenarioHtml,
+  onDownloadPagePdf,
+  onDownloadScenarioPdf,
+  isDarkMode,
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -41,6 +48,15 @@ export function ExportMenu({ onDownloadMd, onDownloadPageHtml, onDownloadScenari
             <button onClick={() => { onDownloadScenarioHtml(); setIsOpen(false); }} className={`block w-full text-left px-3 py-2 text-xs flex items-center gap-2 ${isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>
               <FileCode size={14} className="text-blue-500" /> 
               <span>全シナリオをHTMLで保存 <span className="text-[10px] opacity-50 ml-auto">.html</span></span>
+            </button>
+            <div className={`border-t my-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}></div>
+            <button onClick={() => { onDownloadPagePdf(); setIsOpen(false); }} className={`block w-full text-left px-3 py-2 text-xs flex items-center gap-2 ${isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>
+              <File size={14} className="text-red-500" />
+              <span>ページをPDFで保存 <span className="text-[10px] opacity-50 ml-auto">.pdf</span></span>
+            </button>
+            <button onClick={() => { onDownloadScenarioPdf(); setIsOpen(false); }} className={`block w-full text-left px-3 py-2 text-xs flex items-center gap-2 ${isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>
+              <FileCode size={14} className="text-orange-500" />
+              <span>全シナリオをPDFで保存 <span className="text-[10px] opacity-50 ml-auto">.pdf</span></span>
             </button>
           </div>
         </div>
