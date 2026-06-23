@@ -63,6 +63,10 @@ const downloadBlob = (blob, filename) => {
 
 const buildExportStyles = () => `
   <style>
+    @page {
+      size: A4;
+      margin: 14mm;
+    }
     html { scroll-behavior: smooth; }
     body,
     .pdf-export-root {
@@ -145,7 +149,7 @@ const buildExportStyles = () => `
     .toc a {
       display: block;
       padding: 6px 10px;
-      color: #111827;
+      color: #0969da;
       text-decoration: none;
     }
     .toc summary::after {
@@ -230,8 +234,11 @@ const createScenarioExport = (pages, currentImages) => {
   };
 };
 
-const generateHtmlContent = (htmlContent, pageTitle, tocHtml = '') => {
-  const tailwindConfig = `<script>tailwind = { darkMode: 'class' }</script><script src="https://cdn.tailwindcss.com"></script>`;
+const generateHtmlContent = (htmlContent, pageTitle, tocHtml = '', options = {}) => {
+  const { includeTailwind = true } = options;
+  const tailwindConfig = includeTailwind
+    ? `<script>tailwind = { darkMode: 'class' }</script><script src="https://cdn.tailwindcss.com"></script>`
+    : '';
   const script = `
     <script>
       document.addEventListener('click', function(e) {
@@ -254,224 +261,37 @@ const generateHtmlContent = (htmlContent, pageTitle, tocHtml = '') => {
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${pageTitle}</title>${tailwindConfig}${buildExportStyles()}</head><body class="bg-gray-100 text-gray-900 p-4 md:p-8 min-h-screen">${buildExportBodyHtml(htmlContent, pageTitle, tocHtml)}${script}</body></html>`;
 };
 
-const extractMarkdownHeadings = (content) => (
-  content
-    .split(/\r?\n/)
-    .map((line) => line.match(/^(#{1,3})\s+(.+)$/))
-    .filter(Boolean)
-    .map((match) => ({
-      level: match[1].length,
-      title: match[2].replace(/[*_~`]/g, '').trim(),
-    }))
-);
-
-const cleanMarkdownLine = (line) => (
-  line
-    .replace(/^#{1,6}\s+/, '')
-    .replace(/^>\s?/, '')
-    .replace(/\*\*(.*?)\*\*/g, '$1')
-    .replace(/__(.*?)__/g, '$1')
-    .replace(/\*(.*?)\*/g, '$1')
-    .replace(/_(.*?)_/g, '$1')
-    .replace(/~~(.*?)~~/g, '$1')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
-    .trim()
-);
-
-const loadPdfImage = (src) => new Promise((resolve) => {
-  const image = new Image();
-  image.onload = () => resolve(image);
-  image.onerror = () => resolve(null);
-  image.src = src;
-});
-
-const createPdfRenderer = () => {
-  const scale = 2;
-  const width = 794 * scale;
-  const height = 1123 * scale;
-  const margin = 64 * scale;
-  const contentWidth = width - margin * 2;
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  const pages = [];
-  let y = margin;
-
-  const resetPage = () => {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#111827';
-    y = margin;
-  };
-
-  const commitPage = () => {
-    pages.push(canvas.toDataURL('image/jpeg', 0.96));
-    resetPage();
-  };
-
-  const ensureSpace = (neededHeight) => {
-    if (y + neededHeight > height - margin) {
-      commitPage();
-    }
-  };
-
-  const setFont = ({ size = 14, weight = 400, color = '#111827' } = {}) => {
-    ctx.font = `${weight} ${size * scale}px "Yu Gothic UI", "Meiryo", sans-serif`;
-    ctx.fillStyle = color;
-  };
-
-  const drawRule = () => {
-    ctx.strokeStyle = '#e5e7eb';
-    ctx.lineWidth = 1 * scale;
-    ctx.beginPath();
-    ctx.moveTo(margin, y);
-    ctx.lineTo(width - margin, y);
-    ctx.stroke();
-    y += 16 * scale;
-  };
-
-  const wrapText = (text, maxWidth) => {
-    const chars = [...text];
-    const lines = [];
-    let current = '';
-
-    chars.forEach((char) => {
-      const next = current + char;
-      if (ctx.measureText(next).width > maxWidth && current) {
-        lines.push(current);
-        current = char;
-      } else {
-        current = next;
-      }
-    });
-
-    if (current) lines.push(current);
-    return lines;
-  };
-
-  const drawText = (text, options = {}) => {
-    const {
-      size = 14,
-      weight = 400,
-      color = '#111827',
-      lineHeight = size * 1.75,
-      indent = 0,
-      gapAfter = 8,
-    } = options;
-    const safeText = text || ' ';
-    setFont({ size, weight, color });
-    const lines = wrapText(safeText, contentWidth - indent * scale);
-    const blockHeight = (lines.length * lineHeight + gapAfter) * scale;
-    ensureSpace(blockHeight);
-    lines.forEach((line) => {
-      ctx.fillText(line, margin + indent * scale, y);
-      y += lineHeight * scale;
-    });
-    y += gapAfter * scale;
-  };
-
-  const drawImage = async (src, alt) => {
-    if (!src) {
-      drawText(`[画像: ${alt || 'image'}]`, { size: 12, color: '#6b7280' });
-      return;
-    }
-
-    const image = await loadPdfImage(src);
-    if (!image) {
-      drawText(`[画像: ${alt || 'image'}]`, { size: 12, color: '#6b7280' });
-      return;
-    }
-
-    const ratio = Math.min(contentWidth / image.width, 360 * scale / image.height, 1);
-    const imageWidth = image.width * ratio;
-    const imageHeight = image.height * ratio;
-    ensureSpace(imageHeight + 24 * scale);
-    ctx.drawImage(image, margin, y, imageWidth, imageHeight);
-    y += imageHeight + 16 * scale;
-  };
-
-  resetPage();
-
-  return {
-    drawRule,
-    drawText,
-    drawImage,
-    commitPage,
-    getPages: () => pages,
-  };
-};
-
-const drawMarkdownContent = async (renderer, content, images) => {
-  const lines = content.split(/\r?\n/);
-
-  for (const line of lines) {
-    const imageMatch = line.match(IMAGE_TOKEN_PATTERN);
-    if (imageMatch) {
-      const tokenPattern = new RegExp(IMAGE_TOKEN_PATTERN.source, 'g');
-      let match;
-      while ((match = tokenPattern.exec(line)) !== null) {
-        await renderer.drawImage(images[match[2]], match[1]);
-      }
-      continue;
-    }
-
-    const heading = line.match(/^(#{1,3})\s+(.+)$/);
-    if (heading) {
-      const level = heading[1].length;
-      const size = level === 1 ? 22 : level === 2 ? 18 : 15;
-      renderer.drawText(cleanMarkdownLine(line), { size, weight: 700, gapAfter: 10 });
-      if (level <= 2) renderer.drawRule();
-      continue;
-    }
-
-    const cleaned = cleanMarkdownLine(line);
-    if (!cleaned) {
-      renderer.drawText(' ', { size: 8, lineHeight: 8, gapAfter: 0 });
-      continue;
-    }
-
-    renderer.drawText(cleaned, { size: 13 });
+const getElectronIpc = () => {
+  try {
+    return window.require?.('electron')?.ipcRenderer ?? null;
+  } catch {
+    return null;
   }
 };
 
-const downloadPdf = async ({ pages, pageTitle, currentImages, filename }) => {
-  const { jsPDF } = await import('jspdf');
-  const renderer = createPdfRenderer();
+const openPrintablePdfFallback = (html) => {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) return;
 
-  renderer.drawText(pageTitle, { size: 26, weight: 700, gapAfter: 12 });
-  renderer.drawRule();
-  renderer.drawText('目次', { size: 18, weight: 700, gapAfter: 12 });
-  pages.forEach((page, pageIndex) => {
-    renderer.drawText(`${pageIndex + 1}. ${page.title}`, { size: 13, weight: 700, gapAfter: 4 });
-    extractMarkdownHeadings(page.content).forEach((heading) => {
-      renderer.drawText(heading.title, {
-        size: 11,
-        color: '#4b5563',
-        indent: Math.max(1, heading.level) * 12,
-        gapAfter: 2,
-      });
-    });
-  });
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.addEventListener('load', () => {
+    printWindow.focus();
+    printWindow.print();
+  }, { once: true });
+};
 
-  renderer.commitPage();
+const downloadPdf = async ({ contentHtml, pageTitle, tocHtml, filename }) => {
+  const html = generateHtmlContent(contentHtml, pageTitle, tocHtml, { includeTailwind: false });
+  const ipcRenderer = getElectronIpc();
 
-  for (const page of pages) {
-    renderer.drawText(page.title, { size: 22, weight: 700, gapAfter: 12 });
-    renderer.drawRule();
-    await drawMarkdownContent(renderer, page.content, currentImages);
-    renderer.commitPage();
+  if (ipcRenderer) {
+    await ipcRenderer.invoke('export-pdf', { html, filename });
+    return;
   }
 
-  const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-  const renderedPages = renderer.getPages();
-  renderedPages.forEach((image, index) => {
-    if (index > 0) pdf.addPage();
-    pdf.addImage(image, 'JPEG', 0, 0, 210, 297);
-  });
-
-  downloadBlob(pdf.output('blob'), filename);
+  openPrintablePdfFallback(html);
 };
 
 export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRef }) {
@@ -513,10 +333,11 @@ export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRe
     const currentImages = imagesRef.current;
     if (!activePage) return;
 
+    const { contentHtml, tocHtml } = createPageExport(activePage, currentImages);
     await downloadPdf({
-      pages: [activePage],
+      contentHtml,
       pageTitle: scenarioTitle,
-      currentImages,
+      tocHtml,
       filename: `${activePage.title}.pdf`,
     });
   }, [scenarioTitle, pagesRef, activePageIdRef, imagesRef]);
@@ -526,10 +347,11 @@ export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRe
     const currentImages = imagesRef.current;
     if (!currentPages.length) return;
 
+    const { contentHtml, tocHtml } = createScenarioExport(currentPages, currentImages);
     await downloadPdf({
-      pages: currentPages,
+      contentHtml,
       pageTitle: scenarioTitle,
-      currentImages,
+      tocHtml,
       filename: `${scenarioTitle}.pdf`,
     });
   }, [scenarioTitle, pagesRef, imagesRef]);
