@@ -78,6 +78,17 @@
   border-color: var(--github-border) !important;
 }
 
+.theme-github .border-transparent {
+  border-color: transparent !important;
+}
+
+.theme-github header .border,
+.theme-github header [class*="border-"],
+.theme-github .theme-simple-divider.h-10 .border,
+.theme-github .theme-simple-divider.h-10 [class*="border-"] {
+  border-color: transparent !important;
+}
+
 .theme-github .bg-white,
 .theme-github .bg-white\/30,
 .theme-github .bg-white\/40,
@@ -203,8 +214,39 @@
   color: var(--github-text) !important;
 }
 
+.theme-github .character-picker {
+  background: var(--github-panel) !important;
+  border-color: var(--github-border) !important;
+  color: var(--github-text) !important;
+}
+
+.theme-github .character-picker-input {
+  background: var(--github-bg) !important;
+  border-color: var(--github-border) !important;
+  color: var(--github-text) !important;
+}
+
+.theme-github .character-picker-option {
+  color: var(--github-text) !important;
+}
+
+.theme-github .character-picker-option:hover {
+  background: var(--github-panel-alt) !important;
+}
+
+.theme-github .character-picker-option.bg-indigo-500,
+.theme-github .character-picker-option.bg-indigo-500\/80 {
+  background: var(--github-accent) !important;
+  color: var(--github-accent-contrast) !important;
+  border-color: var(--github-accent) !important;
+}
+
 .theme-github .theme-simple-frame {
   border: 1px solid var(--github-border) !important;
+}
+
+.theme-github .theme-simple-frame::before {
+  border: 0 !important;
 }
 
 .theme-github .theme-simple-surface,
