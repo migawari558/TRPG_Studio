@@ -8,6 +8,19 @@ const TAG_PATTERN = /<[^>]+>/g;
 const stripDarkClasses = (html) => html.replace(DARK_CLASS_PATTERN, '');
 const stripTags = (value) => value.replace(TAG_PATTERN, '').trim();
 
+const DEFAULT_EXPORT_FONT_FAMILY = 'ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+const DEFAULT_EXPORT_FONT_SIZE = 14;
+
+const sanitizeCssFontFamily = (value) => (
+  String(value || DEFAULT_EXPORT_FONT_FAMILY).replace(/[;{}<>]/g, '').trim() || DEFAULT_EXPORT_FONT_FAMILY
+);
+
+const normalizeExportFontSize = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return DEFAULT_EXPORT_FONT_SIZE;
+  return Math.min(28, Math.max(10, parsed));
+};
+
 const addHeadingAnchors = (html, prefix) => {
   let headingIndex = 0;
   const headings = [];
@@ -61,7 +74,11 @@ const downloadBlob = (blob, filename) => {
   URL.revokeObjectURL(url);
 };
 
-const buildExportStyles = () => `
+const buildExportStyles = ({ editorFontFamily, editorFontSize } = {}) => {
+  const safeFontFamily = sanitizeCssFontFamily(editorFontFamily);
+  const safeFontSize = normalizeExportFontSize(editorFontSize);
+
+  return `
   <style>
     @page {
       size: A4;
@@ -70,7 +87,8 @@ const buildExportStyles = () => `
     html { scroll-behavior: smooth; }
     body,
     .pdf-export-root {
-      font-family: "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+      font-family: ${safeFontFamily};
+      font-size: ${safeFontSize}px;
       background-color: #f3f4f6 !important;
       color: #111827 !important;
       word-wrap: break-word;
@@ -83,8 +101,8 @@ const buildExportStyles = () => `
     h1 {
       font-size: 28px;
       font-weight: 700;
-      line-height: 1.3;
-      margin: 0 0 32px;
+      line-height: 1.45;
+      margin: 0 0 34px;
       padding-bottom: 18px;
       text-align: center;
       border-bottom: 2px solid #f3f4f6;
@@ -92,20 +110,63 @@ const buildExportStyles = () => `
     h2 {
       font-size: 20px;
       font-weight: 700;
-      line-height: 1.4;
-      margin: 0 0 16px;
+      line-height: 1.5;
+      margin: 0 0 20px;
       padding-bottom: 6px;
       border-bottom: 1px solid #e5e7eb;
     }
     h3 {
       font-size: 17px;
       font-weight: 700;
-      line-height: 1.4;
-      margin: 18px 0 10px;
+      line-height: 1.5;
+      margin: 24px 0 12px;
     }
-    p, li {
-      font-size: 13px;
-      line-height: 1.75;
+    p,
+    li,
+    .export-content {
+      font-size: ${safeFontSize}px;
+      line-height: 1.95;
+    }
+    .export-content {
+      letter-spacing: 0;
+    }
+    .export-content br {
+      line-height: 1.95;
+    }
+    .export-content h1 {
+      margin: 32px 0 24px;
+      padding: 16px 18px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .export-content h2 {
+      margin: 28px 0 16px;
+      padding: 0 0 0 12px;
+      border-bottom: none;
+      border-left: 4px solid #0969da;
+    }
+    .export-content h3 {
+      margin: 24px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #d8dee4;
+    }
+    .export-content > div,
+    .export-content .info-content,
+    .export-content ul {
+      margin-top: 10px;
+      margin-bottom: 14px;
+    }
+    .export-content li {
+      margin-bottom: 6px;
+      padding-left: 4px;
+    }
+    .export-content .info-content {
+      padding: 14px 16px;
+      background: #ddf4ff;
+      border-left: 4px solid #0969da;
+      border-radius: 0 6px 6px 0;
     }
     img {
       max-width: 100%;
@@ -175,11 +236,13 @@ const buildExportStyles = () => `
       body { padding: 0; background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .export-shell { width: 100% !important; max-width: 100% !important; }
       .container { box-shadow: none !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; border: none !important; }
+      .export-content h1 { break-before: page; page-break-before: always; }
       .break-after-page { page-break-after: always; }
       .copy-btn { display: none !important; }
     }
   </style>
 `;
+};
 
 const buildExportBodyHtml = (htmlContent, pageTitle, tocHtml = '') => (
   `<div class="export-shell"><div class="container bg-white p-6 md:p-10 shadow-lg rounded-lg border border-gray-200"><h1 class="text-3xl font-bold mb-8 text-center border-b-2 border-gray-100 pb-4 text-gray-900">${pageTitle}</h1>${tocHtml}${htmlContent}</div></div>`
@@ -194,7 +257,7 @@ const createPageExport = (page, currentImages) => {
     title,
     depth: Math.max(1, level - 1),
   }))];
-  const contentHtml = `<section class="mb-8"><h2 id="${sectionId}" class="text-xl font-bold mb-4 pb-1 border-b border-gray-200 text-gray-900">${page.title}</h2><div class="prose prose-sm max-w-none text-gray-800 leading-relaxed text-sm">${anchoredHtml}</div></section>`;
+  const contentHtml = `<section class="mb-8"><h2 id="${sectionId}" class="text-xl font-bold mb-4 pb-1 border-b border-gray-200 text-gray-900">${page.title}</h2><div class="export-content prose prose-sm max-w-none text-gray-800 leading-relaxed text-sm">${anchoredHtml}</div></section>`;
 
   return {
     contentHtml,
@@ -221,7 +284,7 @@ const createScenarioExport = (pages, currentImages) => {
     return `
       <section class="mb-8${breakClass}">
         <h2 id="${sectionId}" class="text-xl font-bold mb-4 pb-1 border-b border-gray-200 text-gray-900">${page.title}</h2>
-        <div class="prose prose-sm max-w-none text-gray-800 leading-relaxed text-sm">
+        <div class="export-content prose prose-sm max-w-none text-gray-800 leading-relaxed text-sm">
           ${anchoredHtml}
         </div>
       </section>
@@ -235,7 +298,7 @@ const createScenarioExport = (pages, currentImages) => {
 };
 
 const generateHtmlContent = (htmlContent, pageTitle, tocHtml = '', options = {}) => {
-  const { includeTailwind = true } = options;
+  const { includeTailwind = true, editorFontFamily, editorFontSize } = options;
   const tailwindConfig = includeTailwind
     ? `<script>tailwind = { darkMode: 'class' }</script><script src="https://cdn.tailwindcss.com"></script>`
     : '';
@@ -258,7 +321,7 @@ const generateHtmlContent = (htmlContent, pageTitle, tocHtml = '', options = {})
     </script>
   `;
 
-  return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${pageTitle}</title>${tailwindConfig}${buildExportStyles()}</head><body class="bg-gray-100 text-gray-900 p-4 md:p-8 min-h-screen">${buildExportBodyHtml(htmlContent, pageTitle, tocHtml)}${script}</body></html>`;
+  return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${pageTitle}</title>${tailwindConfig}${buildExportStyles({ editorFontFamily, editorFontSize })}</head><body class="bg-gray-100 text-gray-900 p-4 md:p-8 min-h-screen">${buildExportBodyHtml(htmlContent, pageTitle, tocHtml)}${script}</body></html>`;
 };
 
 const getElectronIpc = () => {
@@ -282,8 +345,12 @@ const openPrintablePdfFallback = (html) => {
   }, { once: true });
 };
 
-const downloadPdf = async ({ contentHtml, pageTitle, tocHtml, filename }) => {
-  const html = generateHtmlContent(contentHtml, pageTitle, tocHtml, { includeTailwind: false });
+const downloadPdf = async ({ contentHtml, pageTitle, tocHtml, filename, editorFontFamily, editorFontSize }) => {
+  const html = generateHtmlContent(contentHtml, pageTitle, tocHtml, {
+    includeTailwind: false,
+    editorFontFamily,
+    editorFontSize,
+  });
   const ipcRenderer = getElectronIpc();
 
   if (ipcRenderer) {
@@ -294,7 +361,7 @@ const downloadPdf = async ({ contentHtml, pageTitle, tocHtml, filename }) => {
   openPrintablePdfFallback(html);
 };
 
-export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRef }) {
+export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRef, editorFontFamily, editorFontSize }) {
   const handleDownloadMd = useCallback(() => {
     const currentPages = pagesRef.current;
     const currentImages = imagesRef.current;
@@ -314,8 +381,8 @@ export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRe
     if (!activePage) return;
 
     const { contentHtml, tocHtml } = createPageExport(activePage, currentImages);
-    downloadBlob(new Blob([generateHtmlContent(contentHtml, scenarioTitle, tocHtml)], { type: 'text/html' }), `${activePage.title}.html`);
-  }, [scenarioTitle, pagesRef, activePageIdRef, imagesRef]);
+    downloadBlob(new Blob([generateHtmlContent(contentHtml, scenarioTitle, tocHtml, { editorFontFamily, editorFontSize })], { type: 'text/html' }), `${activePage.title}.html`);
+  }, [scenarioTitle, pagesRef, activePageIdRef, imagesRef, editorFontFamily, editorFontSize]);
 
   const handleDownloadScenarioHtml = useCallback(() => {
     const currentPages = pagesRef.current;
@@ -323,8 +390,8 @@ export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRe
     if (!currentPages.length) return;
 
     const { contentHtml, tocHtml } = createScenarioExport(currentPages, currentImages);
-    downloadBlob(new Blob([generateHtmlContent(contentHtml, scenarioTitle, tocHtml)], { type: 'text/html' }), `${scenarioTitle}.html`);
-  }, [scenarioTitle, pagesRef, imagesRef]);
+    downloadBlob(new Blob([generateHtmlContent(contentHtml, scenarioTitle, tocHtml, { editorFontFamily, editorFontSize })], { type: 'text/html' }), `${scenarioTitle}.html`);
+  }, [scenarioTitle, pagesRef, imagesRef, editorFontFamily, editorFontSize]);
 
   const handleDownloadPagePdf = useCallback(async () => {
     const currentPages = pagesRef.current;
@@ -339,8 +406,10 @@ export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRe
       pageTitle: scenarioTitle,
       tocHtml,
       filename: `${activePage.title}.pdf`,
+      editorFontFamily,
+      editorFontSize,
     });
-  }, [scenarioTitle, pagesRef, activePageIdRef, imagesRef]);
+  }, [scenarioTitle, pagesRef, activePageIdRef, imagesRef, editorFontFamily, editorFontSize]);
 
   const handleDownloadScenarioPdf = useCallback(async () => {
     const currentPages = pagesRef.current;
@@ -353,8 +422,10 @@ export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRe
       pageTitle: scenarioTitle,
       tocHtml,
       filename: `${scenarioTitle}.pdf`,
+      editorFontFamily,
+      editorFontSize,
     });
-  }, [scenarioTitle, pagesRef, imagesRef]);
+  }, [scenarioTitle, pagesRef, imagesRef, editorFontFamily, editorFontSize]);
 
   return {
     handleDownloadMd,

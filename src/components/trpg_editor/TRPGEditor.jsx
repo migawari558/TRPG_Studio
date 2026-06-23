@@ -62,7 +62,11 @@ export function TRPGEditor({
     handleDownloadScenarioPdf,
   } = useExporter({ 
     scenarioTitle: scenario.title, 
-    pagesRef, imagesRef, activePageIdRef 
+    pagesRef,
+    imagesRef,
+    activePageIdRef,
+    editorFontFamily,
+    editorFontSize,
   });
 
   const { 
