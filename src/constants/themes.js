@@ -15,6 +15,14 @@ export const APP_THEMES = [
     backgroundStyle: 'plain',
     editorStyle: 'minimal',
   },
+  {
+    id: 'github',
+    label: 'GitHubテーマ',
+    description: 'GitHub Primer風のキャンバス、境界線、青アクセントで構成されたテーマです。',
+    rootClassName: 'theme-github',
+    backgroundStyle: 'plain',
+    editorStyle: 'minimal',
+  },
 ];
 
 export const DEFAULT_APP_THEME = APP_THEMES[0].id;
