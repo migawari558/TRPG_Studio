@@ -23,8 +23,8 @@
   --simple-border: #4b5563;
   --simple-text: #f4f4f5;
   --simple-muted: #a1a1aa;
-  --simple-accent: #f4f4f5;
-  --simple-accent-contrast: #09090b;
+  --simple-accent: #3f3f46;
+  --simple-accent-contrast: #f4f4f5;
   --simple-danger: #f87171;
 }
 
@@ -153,6 +153,17 @@
   border-color: var(--simple-accent) !important;
 }
 
+.theme-simple.dark .bg-indigo-500,
+.theme-simple.dark .bg-indigo-500\/80,
+.theme-simple.dark .bg-indigo-500\/90,
+.theme-simple.dark .bg-indigo-600,
+.theme-simple.dark .bg-indigo-600\/80,
+.theme-simple.dark .bg-indigo-600\/90 {
+  background: var(--simple-accent) !important;
+  color: var(--simple-accent-contrast) !important;
+  border-color: var(--simple-accent) !important;
+}
+
 .theme-simple.dark .bg-white,
 .theme-simple.dark .bg-white\/30,
 .theme-simple.dark .bg-white\/40,
@@ -168,6 +179,12 @@
 .theme-simple.dark .bg-gray-700\/80 {
   background: var(--simple-panel-alt) !important;
   color: var(--simple-text) !important;
+}
+
+.theme-simple.dark .bg-black {
+  background: var(--simple-bg) !important;
+  color: var(--simple-text) !important;
+  border-color: var(--simple-border) !important;
 }
 
 .theme-simple.dark .text-black {
