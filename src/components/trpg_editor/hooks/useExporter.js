@@ -10,6 +10,9 @@ const stripTags = (value) => value.replace(TAG_PATTERN, '').trim();
 
 const DEFAULT_EXPORT_FONT_FAMILY = 'ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
 const DEFAULT_EXPORT_FONT_SIZE = 14;
+const MARKDOWN_FILTERS = [{ name: 'Markdown', extensions: ['md'] }];
+const HTML_FILTERS = [{ name: 'HTML', extensions: ['html'] }];
+const PDF_FILTERS = [{ name: 'PDF', extensions: ['pdf'] }];
 
 const sanitizeCssFontFamily = (value) => (
   String(value || DEFAULT_EXPORT_FONT_FAMILY).replace(/[;{}<>]/g, '').trim() || DEFAULT_EXPORT_FONT_FAMILY
@@ -72,6 +75,52 @@ const downloadBlob = (blob, filename) => {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+};
+
+const saveWithBrowserPicker = async ({ content, filename, mimeType, extension, description }) => {
+  if (!window.showSaveFilePicker) return false;
+
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: filename,
+      types: [{
+        description,
+        accept: { [mimeType]: [`.${extension}`] },
+      }],
+    });
+    const writable = await handle.createWritable();
+    await writable.write(new Blob([content], { type: mimeType }));
+    await writable.close();
+    return true;
+  } catch (error) {
+    if (error?.name === 'AbortError') return true;
+    throw error;
+  }
+};
+
+const saveTextFile = async ({ content, filename, mimeType, extension, filters, description }) => {
+  const ipcRenderer = getElectronIpc();
+
+  if (ipcRenderer) {
+    await ipcRenderer.invoke('save-export-file', {
+      content,
+      filename,
+      extension,
+      filters,
+    });
+    return;
+  }
+
+  const savedWithPicker = await saveWithBrowserPicker({
+    content,
+    filename,
+    mimeType,
+    extension,
+    description,
+  });
+  if (savedWithPicker) return;
+
+  downloadBlob(new Blob([content], { type: mimeType }), filename);
 };
 
 const buildExportStyles = ({ editorFontFamily, editorFontSize } = {}) => {
@@ -354,7 +403,12 @@ const downloadPdf = async ({ contentHtml, pageTitle, tocHtml, filename, editorFo
   const ipcRenderer = getElectronIpc();
 
   if (ipcRenderer) {
-    await ipcRenderer.invoke('export-pdf', { html, filename });
+    await ipcRenderer.invoke('export-pdf', {
+      html,
+      filename,
+      extension: 'pdf',
+      filters: PDF_FILTERS,
+    });
     return;
   }
 
@@ -362,7 +416,7 @@ const downloadPdf = async ({ contentHtml, pageTitle, tocHtml, filename, editorFo
 };
 
 export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRef, editorFontFamily, editorFontSize }) {
-  const handleDownloadMd = useCallback(() => {
+  const handleDownloadMd = useCallback(async () => {
     const currentPages = pagesRef.current;
     const currentImages = imagesRef.current;
     let combinedText = currentPages.map(p => `# ${p.title}\n\n${p.content}`).join('\n\n---\n\n');
@@ -370,10 +424,17 @@ export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRe
       const src = currentImages[id];
       return src ? `![${alt}](${src})` : match;
     });
-    downloadBlob(new Blob([combinedText], { type: 'text/markdown' }), `${scenarioTitle}.md`);
+    await saveTextFile({
+      content: combinedText,
+      filename: `${scenarioTitle}.md`,
+      mimeType: 'text/markdown',
+      extension: 'md',
+      filters: MARKDOWN_FILTERS,
+      description: 'Markdown',
+    });
   }, [scenarioTitle, pagesRef, imagesRef]);
 
-  const handleDownloadPageHtml = useCallback(() => {
+  const handleDownloadPageHtml = useCallback(async () => {
     const currentPages = pagesRef.current;
     const activeId = activePageIdRef.current;
     const activePage = currentPages.find(p => p.id === activeId) || currentPages[0];
@@ -381,16 +442,30 @@ export function useExporter({ scenarioTitle, pagesRef, imagesRef, activePageIdRe
     if (!activePage) return;
 
     const { contentHtml, tocHtml } = createPageExport(activePage, currentImages);
-    downloadBlob(new Blob([generateHtmlContent(contentHtml, scenarioTitle, tocHtml, { editorFontFamily, editorFontSize })], { type: 'text/html' }), `${activePage.title}.html`);
+    await saveTextFile({
+      content: generateHtmlContent(contentHtml, scenarioTitle, tocHtml, { editorFontFamily, editorFontSize }),
+      filename: `${activePage.title}.html`,
+      mimeType: 'text/html',
+      extension: 'html',
+      filters: HTML_FILTERS,
+      description: 'HTML',
+    });
   }, [scenarioTitle, pagesRef, activePageIdRef, imagesRef, editorFontFamily, editorFontSize]);
 
-  const handleDownloadScenarioHtml = useCallback(() => {
+  const handleDownloadScenarioHtml = useCallback(async () => {
     const currentPages = pagesRef.current;
     const currentImages = imagesRef.current;
     if (!currentPages.length) return;
 
     const { contentHtml, tocHtml } = createScenarioExport(currentPages, currentImages);
-    downloadBlob(new Blob([generateHtmlContent(contentHtml, scenarioTitle, tocHtml, { editorFontFamily, editorFontSize })], { type: 'text/html' }), `${scenarioTitle}.html`);
+    await saveTextFile({
+      content: generateHtmlContent(contentHtml, scenarioTitle, tocHtml, { editorFontFamily, editorFontSize }),
+      filename: `${scenarioTitle}.html`,
+      mimeType: 'text/html',
+      extension: 'html',
+      filters: HTML_FILTERS,
+      description: 'HTML',
+    });
   }, [scenarioTitle, pagesRef, imagesRef, editorFontFamily, editorFontSize]);
 
   const handleDownloadPagePdf = useCallback(async () => {

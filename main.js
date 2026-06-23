@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -10,21 +10,48 @@ const sanitizeFilename = (filename) => {
   return safeName || 'export.pdf';
 };
 
-const getUniqueFilePath = (directory, filename) => {
-  const safeFilename = sanitizeFilename(filename);
-  const parsed = path.parse(safeFilename);
-  let candidate = path.join(directory, safeFilename);
-  let counter = 1;
-
-  while (fs.existsSync(candidate)) {
-    candidate = path.join(directory, `${parsed.name} (${counter})${parsed.ext}`);
-    counter += 1;
-  }
-
-  return candidate;
+const ensureExtension = (filePath, extension) => {
+  if (!extension || path.extname(filePath)) return filePath;
+  return `${filePath}.${extension.replace(/^\./, '')}`;
 };
 
-ipcMain.handle('export-pdf', async (event, { html, filename }) => {
+const showExportSaveDialog = async ({ browserWindow, filename, extension, filters }) => {
+  const result = await dialog.showSaveDialog(browserWindow, {
+    defaultPath: path.join(app.getPath('downloads'), sanitizeFilename(filename)),
+    filters,
+  });
+
+  if (result.canceled || !result.filePath) {
+    return null;
+  }
+
+  return ensureExtension(result.filePath, extension);
+};
+
+ipcMain.handle('save-export-file', async (event, { content, filename, extension, filters }) => {
+  const outputPath = await showExportSaveDialog({
+    browserWindow: BrowserWindow.fromWebContents(event.sender),
+    filename,
+    extension,
+    filters,
+  });
+
+  if (!outputPath) return { ok: false, canceled: true };
+
+  await fs.promises.writeFile(outputPath, content, 'utf8');
+  return { ok: true, path: outputPath };
+});
+
+ipcMain.handle('export-pdf', async (event, { html, filename, extension, filters }) => {
+  const outputPath = await showExportSaveDialog({
+    browserWindow: BrowserWindow.fromWebContents(event.sender),
+    filename,
+    extension,
+    filters,
+  });
+
+  if (!outputPath) return { ok: false, canceled: true };
+
   const pdfWindow = new BrowserWindow({
     show: false,
     width: 794,
@@ -54,7 +81,6 @@ ipcMain.handle('export-pdf', async (event, { html, filename }) => {
       printBackground: true,
       preferCSSPageSize: true,
     });
-    const outputPath = getUniqueFilePath(app.getPath('downloads'), filename);
     await fs.promises.writeFile(outputPath, pdfBuffer);
     return { ok: true, path: outputPath };
   } finally {
